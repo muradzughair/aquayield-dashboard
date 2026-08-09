@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AquaYield — Tank Dashboard</title>
+<style>
+  :root{
+    --teal-50:#eefbfa;
+    --teal-100:#d7f4f1;
+    --teal-500:#0f9aa4;
+    --teal-600:#0c828b;
+    --teal-700:#0a6971;
+    --ink-900:#101828;
+    --ink-700:#344054;
+    --ink-500:#667085;
+    --ink-400:#98a2b3;
+    --ink-200:#e4e7ec;
+    --ink-100:#f0f2f5;
+    --ink-50:#f8f9fb;
+    --green-600:#12805c;
+    --green-500:#1a9c72;
+    --green-100:#e2f6ee;
+    --amber-600:#b25e09;
+    --amber-500:#d68910;
+    --amber-100:#fdf1dc;
+    --red-600:#c4362e;
+    --red-500:#e04338;
+    --red-100:#fbe6e4;
+    --blue-500:#3b7dd8;
+    --card-radius:14px;
+    --shadow: 0 1px 2px rgba(16,24,40,0.04), 0 1px 3px rgba(16,24,40,0.06);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--ink-50);
+    color: var(--ink-900);
+    -webkit-font-smoothing: antialiased;
+  }
+  a{ text-decoration:none; color:inherit; }
+  button{ font-family:inherit; cursor:pointer; }
+
+  .app{ display:flex; min-height:100vh; }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    width: 232px;
+    flex-shrink:0;
+    background:#fff;
+    border-right:1px solid var(--ink-200);
+    display:flex;
+    flex-direction:column;
+    padding: 20px 14px;
+    position: sticky;
+    top:0;
+    height:100vh;
+  }
+  .brand{
+    display:flex; align-items:center; gap:9px;
+    padding: 4px 8px 22px 8px;
+  }
+  .brand-mark{
+    width:30px; height:30px; border-radius:9px;
+    background: linear-gradient(135deg, var(--teal-500), var(--blue-500));
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .brand-mark svg{ width:17px; height:17px; }
+  .brand-name{ font-weight:700; font-size:17px; letter-spacing:-0.01em; color:var(--ink-900); }
+
+  .nav{ display:flex; flex-direction:column; gap:2px; flex:1; }
+  .nav-item{
+    display:flex; align-items:center; gap:11px;
+    padding: 9px 11px;
+    border-radius:9px;
+    color: var(--ink-700);
+    font-size:14px;
+    font-weight:500;
+    background:none; border:none; width:100%; text-align:left;
+    position:relative;
+  }
+  .nav-item svg{ width:17px; height:17px; flex-shrink:0; color: var(--ink-500); }
+  .nav-item:hover{ background: var(--ink-100); }
+  .nav-item.active{ background: var(--teal-50); color: var(--teal-700); }
+  .nav-item.active svg{ color: var(--teal-600); }
+  .nav-badge{
+    margin-left:auto;
+    background: var(--red-500); color:#fff; font-size:11px; font-weight:700;
+    min-width:18px; height:18px; border-radius:999px;
+    display:flex; align-items:center; justify-content:center;
+    padding:0 4px;
+  }
+  .nav-divider{ height:1px; background:var(--ink-200); margin:10px 4px; }
+
+  .sidebar-foot{
+    border-top:1px solid var(--ink-200);
+    padding-top:12px;
+    margin-top:8px;
+  }
+  .help-card{
+    background: var(--ink-50);
+    border:1px solid var(--ink-200);
+    border-radius:12px;
+    padding:14px;
+    text-align:center;
+  }
+  .help-card .icon-circle{
+    width:34px; height:34px; border-radius:999px;
+    background:#fff; border:1px solid var(--ink-200);
+    display:flex; align-items:center; justify-content:center;
+    margin: 0 auto 8px auto;
+  }
+  .help-card p{ margin:0 0 10px 0; font-size:12.5px; color:var(--ink-500); line-height:1.4; }
+  .btn-outline-sm{
+    display:block; width:100%;
+    padding:7px 10px;
+    border-radius:8px;
+    border:1px solid var(--ink-200);
+    background:#fff;
+    color: var(--teal-600);
+    font-size:12.5px; font-weight:600;
+  }
+  .btn-outline-sm:hover{ background: var(--teal-50); }
+
+  /* ---------- Main ---------- */
+  .main{ flex:1; min-width:0; display:flex; flex-direction:column; }
+
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 14px 28px;
+    background:#fff;
+    border-bottom:1px solid var(--ink-200);
+    position:sticky; top:0; z-index:5;
+  }
+  .tank-select{
+    display:flex; align-items:center; gap:10px;
+  }
+  select.tank-dropdown{
+    appearance:none;
+    border:1px solid var(--ink-200);
+    background:#fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6"><path d="M0 0l5 6 5-6z" fill="%23667085"/></svg>') no-repeat right 12px center;
+    border-radius:9px;
+    padding: 8px 30px 8px 12px;
+    font-size:13.5px; font-weight:600; color:var(--ink-900);
+  }
+  .status-pill{
+    display:inline-flex; align-items:center; gap:6px;
+    background: var(--green-100); color: var(--green-600);
+    font-size:12.5px; font-weight:600;
+    padding:6px 11px; border-radius:999px;
+  }
+  .status-pill .dot{ width:6px; height:6px; border-radius:999px; background: var(--green-600); }
+  .topbar-right{ display:flex; align-items:center; gap:18px; }
+  .icon-btn{
+    position:relative; background:none; border:none; color:var(--ink-500);
+    width:34px; height:34px; display:flex; align-items:center; justify-content:center;
+    border-radius:8px;
+  }
+  .icon-btn:hover{ background:var(--ink-100); }
+  .icon-btn svg{ width:19px; height:19px; }
+  .ping{
+    position:absolute; top:5px; right:5px;
+    width:8px; height:8px; border-radius:999px; background:var(--red-500);
+    border:2px solid #fff;
+  }
+  .user-chip{ display:flex; align-items:center; gap:8px; }
+  .avatar{
+    width:32px; height:32px; border-radius:999px;
+    background: linear-gradient(135deg,var(--teal-500),var(--blue-500));
+    color:#fff; font-size:12px; font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .user-chip .name{ font-size:13.5px; font-weight:600; color:var(--ink-900); }
+
+  .content{ padding: 26px 28px 60px 28px; flex:1; }
+  .page{ display:none; animation: fade .25s ease; }
+  .page.active{ display:block; }
+  @keyframes fade{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;} }
+
+  .page-head{ margin-bottom:20px; }
+  .page-head h1{ font-size:23px; margin:0 0 4px 0; letter-spacing:-0.01em; }
+  .page-head p{ margin:0; color:var(--ink-500); font-size:14px; }
+  .page-head-row{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+
+  .card{
+    background:#fff; border:1px solid var(--ink-200); border-radius: var(--card-radius);
+    box-shadow: var(--shadow);
+  }
+  .btn-primary{
+    background: var(--teal-600); color:#fff; border:none;
+    padding:9px 15px; border-radius:9px; font-size:13.5px; font-weight:600;
+    display:inline-flex; align-items:center; gap:7px;
+  }
+  .btn-primary:hover{ background: var(--teal-700); }
+  .btn-secondary{
+    background:#fff; color:var(--ink-700); border:1px solid var(--ink-200);
+    padding:9px 15px; border-radius:9px; font-size:13.5px; font-weight:600;
+  }
+  .btn-secondary:hover{ background:var(--ink-100); }
+
+  /* ---- Dashboard ---- */
+  .grid-2{ display:grid; grid-template-columns: 1fr 300px; gap:16px; margin-bottom:16px; }
+  .health-card{ padding:22px 24px; display:flex; align-items:center; justify-content:space-between; gap:20px; }
+  .health-left{ display:flex; align-items:center; gap:18px; }
+  .health-icon{
+    width:56px; height:56px; border-radius:14px; background:var(--green-100);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .health-icon svg{ width:28px; height:28px; color:var(--green-600); }
+  .health-label{ font-size:13px; color:var(--ink-500); margin-bottom:2px; }
+  .health-value{ font-size:26px; font-weight:700; color:var(--green-600); letter-spacing:-0.01em; }
+  .health-sub{ font-size:13px; color:var(--ink-500); margin-top:3px; }
+  .fish-emoji{ font-size:40px; }
+  .meta-card{ padding:20px 22px; display:flex; flex-direction:column; gap:16px; }
+  .meta-row{ display:flex; align-items:center; gap:11px; }
+  .meta-row svg{ width:17px; height:17px; color:var(--ink-500); flex-shrink:0; }
+  .meta-label{ font-size:12px; color:var(--ink-500); }
+  .meta-value{ font-size:13.5px; font-weight:600; color:var(--ink-900); }
+  .meta-value.online{ color:var(--green-600); }
+
+  h2.section-title{ font-size:15.5px; font-weight:700; margin: 4px 0 12px 2px; }
+
+  .params-grid{
+    display:grid; grid-template-columns: repeat(4, 1fr); gap:14px; margin-bottom:22px;
+  }
+  .param-card{ padding:16px 18px; }
+  .param-top{ display:flex; align-items:center; gap:9px; margin-bottom:10px; }
+  .param-icon{ width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .param-icon svg{ width:16px; height:16px; }
+  .param-name{ font-size:12.5px; color:var(--ink-500); font-weight:500; }
+  .param-value{ font-size:21px; font-weight:700; margin-bottom:9px; }
+  .param-value .unit{ font-size:12px; font-weight:500; color:var(--ink-500); margin-left:2px; }
+  .gauge-track{ position:relative; height:7px; border-radius:999px; overflow:hidden; display:flex; }
+  .gauge-marker{ position:absolute; top:-3px; width:2px; height:13px; background:var(--ink-900); border-radius:2px; }
+  .gauge-range{ display:flex; justify-content:space-between; font-size:10.5px; color:var(--ink-400); margin-top:5px; }
+
+  .bottom-grid{ display:grid; grid-template-columns: 1.15fr 1.15fr 1fr; gap:16px; }
+  .panel{ padding:18px 20px; }
+  .panel-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+  .panel-head h3{ font-size:14.5px; margin:0; }
+  .panel-head a{ font-size:12.5px; color:var(--teal-600); font-weight:600; }
+  .alert-row, .sugg-row{ display:flex; gap:10px; padding:10px 0; border-top:1px solid var(--ink-100); }
+  .alert-row:first-child, .sugg-row:first-child{ border-top:none; padding-top:0; }
+  .row-icon{ width:28px; height:28px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
+  .row-icon svg{ width:14px; height:14px; }
+  .row-title{ font-size:13.5px; font-weight:600; margin:0 0 2px 0; }
+  .row-sub{ font-size:12px; color:var(--ink-500); margin:0; }
+  .row-time{ font-size:11px; color:var(--ink-400); white-space:nowrap; margin-left:auto; padding-left:8px; }
+  .tag{ display:inline-block; font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:5px; margin-top:5px; }
+  .tag.critical{ background:var(--red-100); color:var(--red-600); }
+  .tag.warning{ background:var(--amber-100); color:var(--amber-600); }
+
+  .overview-stat{ display:flex; align-items:center; justify-content:space-between; padding:9px 0; }
+  .overview-stat .l{ font-size:12.5px; color:var(--ink-500); }
+  .overview-stat .v{ font-size:14.5px; font-weight:700; }
+  .mini-spark{ width:100%; height:46px; margin-top:6px; }
+
+  /* ---- Alerts page ---- */
+  .filter-bar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:10px; }
+  .seg{ display:flex; gap:4px; background:var(--ink-100); padding:4px; border-radius:10px; }
+  .seg button{ background:none; border:none; padding:7px 13px; border-radius:7px; font-size:13px; font-weight:600; color:var(--ink-500); display:flex; align-items:center; gap:6px; }
+  .seg button.active{ background:#fff; color:var(--ink-900); box-shadow:var(--shadow); }
+  .seg .count{ background:var(--ink-200); color:var(--ink-700); font-size:10.5px; font-weight:700; padding:1px 6px; border-radius:999px; }
+  .seg button.active .count{ background:var(--red-500); color:#fff; }
+
+  .alert-item{ display:flex; align-items:center; gap:14px; padding:16px 18px; border-left:4px solid transparent; border-bottom:1px solid var(--ink-100); }
+  .alert-item:last-child{ border-bottom:none; }
+  .alert-item.critical{ border-left-color:var(--red-500); }
+  .alert-item.warning{ border-left-color:var(--amber-500); }
+  .alert-item.info{ border-left-color:var(--blue-500); }
+  .alert-item .row-icon{ width:34px; height:34px; }
+  .alert-item .row-icon svg{ width:16px; height:16px; }
+  .alert-item .body{ flex:1; min-width:0; }
+  .alert-item .row-title{ font-size:14.5px; }
+  .alert-item .row-sub{ font-size:13px; }
+  .badge{ font-size:11.5px; font-weight:700; padding:5px 11px; border-radius:999px; white-space:nowrap; }
+  .badge.critical{ background:var(--red-100); color:var(--red-600); }
+  .badge.warning{ background:var(--amber-100); color:var(--amber-600); }
+  .badge.info{ background:#e6efff; color:var(--blue-500); }
+  .alert-meta{ display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
+  .alert-meta .row-time{ margin:0; }
+
+  .pagination{ display:flex; justify-content:center; align-items:center; gap:6px; margin-top:20px; }
+  .pagination button{ width:32px; height:32px; border-radius:8px; border:1px solid var(--ink-200); background:#fff; font-size:13px; font-weight:600; color:var(--ink-700); }
+  .pagination button.active{ background:var(--teal-600); color:#fff; border-color:var(--teal-600); }
+  .pagination button:hover:not(.active){ background:var(--ink-100); }
+
+  /* ---- AI suggestions ---- */
+  .tabs{ display:flex; gap:22px; border-bottom:1px solid var(--ink-200); margin-bottom:18px; }
+  .tabs button{ background:none; border:none; padding:0 0 12px 0; font-size:14px; font-weight:600; color:var(--ink-500); border-bottom:2px solid transparent; margin-bottom:-1px; }
+  .tabs button.active{ color:var(--teal-600); border-bottom-color:var(--teal-600); }
+
+  .sugg-card{ padding:18px 20px; margin-bottom:14px; display:flex; gap:14px; }
+  .sugg-card.alert-tone{ background:var(--amber-100); border-color:#f5d9a6; }
+  .sugg-icon{ width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:var(--teal-50); }
+  .sugg-icon svg{ width:19px; height:19px; color:var(--teal-600); }
+  .sugg-icon.warn{ background:#fbe6c9; }
+  .sugg-icon.warn svg{ color:var(--amber-600); }
+  .sugg-icon.forecast{ background:#e7e6fb; }
+  .sugg-icon.forecast svg{ color:#5b52d6; }
+  .sugg-icon.ok{ background:var(--green-100); }
+  .sugg-icon.ok svg{ color:var(--green-600); }
+  .sugg-body{ flex:1; }
+  .sugg-title-row{ display:flex; align-items:center; gap:8px; margin-bottom:5px; }
+  .sugg-title-row h4{ font-size:15px; margin:0; }
+  .chip{ font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.02em; padding:2px 8px; border-radius:5px; background:var(--ink-100); color:var(--ink-500); }
+  .sugg-time{ margin-left:auto; font-size:12px; color:var(--ink-400); font-weight:500; }
+  .sugg-text{ font-size:13.5px; color:var(--ink-700); margin:0 0 12px 0; line-height:1.5; }
+  .sugg-actions{ display:flex; gap:8px; }
+  .harvest-window{ font-size:15px; font-weight:700; margin: 2px 0 2px 0; }
+
+  /* ---- Device status ---- */
+  .status-grid{ display:grid; grid-template-columns: repeat(3,1fr); gap:16px; margin-bottom:16px; }
+  .status-card{ padding:20px 22px; }
+  .status-eyebrow{ font-size:11px; font-weight:700; letter-spacing:.04em; color:var(--ink-400); text-transform:uppercase; margin-bottom:12px; }
+  .status-main{ display:flex; align-items:center; gap:10px; font-size:19px; font-weight:700; margin-bottom:6px; }
+  .status-main svg{ width:20px; height:20px; }
+  .status-foot{ font-size:12.5px; color:var(--ink-500); display:flex; justify-content:space-between; align-items:center; }
+  .device-info-card{ padding:22px; }
+  .device-info-grid{ display:grid; grid-template-columns: 150px 1fr 150px 1fr; row-gap:16px; column-gap:8px; align-items:center; margin-top:16px; }
+  .device-visual{
+    width:112px; height:150px; border-radius:12px; background:linear-gradient(160deg,#1b2530,#0e141b);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; color:#7fb9c2;
+  }
+  .device-visual svg{ width:26px; height:26px; }
+  .device-visual span{ font-size:9px; letter-spacing:.08em; font-weight:700; }
+  .dinfo-label{ font-size:12px; color:var(--ink-500); }
+  .dinfo-value{ font-size:13.5px; font-weight:600; }
+
+  /* ---- Tanks page ---- */
+  .tanks-grid{ display:grid; grid-template-columns: repeat(2,1fr); gap:16px; }
+  .tank-card{ padding:18px 20px; }
+  .tank-card.offline{ opacity:0.6; }
+  .tank-card-top{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .tank-card-id{ display:flex; align-items:center; gap:11px; }
+  .tank-avatar{ width:38px; height:38px; border-radius:10px; background:var(--teal-50); display:flex; align-items:center; justify-content:center; }
+  .tank-avatar svg{ width:19px; height:19px; color:var(--teal-600); }
+  .tank-avatar.off{ background:var(--ink-100); }
+  .tank-avatar.off svg{ color:var(--ink-400); }
+  .tank-name{ font-size:14.5px; font-weight:700; }
+  .tank-updated{ font-size:12px; color:var(--ink-500); }
+  .tank-stats{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:12px; }
+  .tank-stat{ background:var(--ink-50); border-radius:9px; padding:9px 10px; }
+  .tank-stat .l{ font-size:11px; color:var(--ink-500); margin-bottom:3px; }
+  .tank-stat .v{ font-size:14px; font-weight:700; }
+  .tank-stat .v.warn{ color:var(--red-600); }
+  .tank-stat .v.good{ color:var(--green-600); }
+  .tank-card-foot{ text-align:right; }
+  .tank-card-foot a{ font-size:12.5px; font-weight:600; color:var(--teal-600); }
+
+  /* ---- History & trends ---- */
+  .hist-layout{ display:grid; grid-template-columns: 240px 1fr; gap:16px; align-items:start; }
+  .hist-side{ padding:18px; }
+  .hist-side h4{ font-size:13px; margin:0 0 12px 0; color:var(--ink-500); text-transform:uppercase; letter-spacing:.03em; font-weight:700; }
+  .param-check{ display:flex; align-items:center; gap:9px; padding:8px 4px; font-size:13.5px; font-weight:500; }
+  .param-check input{ width:15px; height:15px; accent-color: var(--teal-600); }
+  .dot-sw{ width:9px; height:9px; border-radius:999px; margin-left:auto; }
+  .chart-card{ padding:20px 22px; }
+  .chart-head{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; }
+  .chart-head h3{ font-size:15.5px; margin:0 0 3px 0; }
+  .chart-head .sub{ font-size:12.5px; color:var(--ink-500); }
+  .range-seg{ display:flex; gap:3px; background:var(--ink-100); padding:3px; border-radius:8px; }
+  .range-seg button{ background:none; border:none; padding:5px 10px; border-radius:6px; font-size:12px; font-weight:700; color:var(--ink-500); }
+  .range-seg button.active{ background:#fff; color:var(--ink-900); box-shadow:var(--shadow); }
+  .stat-row{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:16px; }
+  .stat-box{ border:1px solid var(--ink-200); border-radius:10px; padding:12px 14px; text-align:center; }
+  .stat-box.highlight{ border-color:var(--red-500); background:var(--red-100); }
+  .stat-box .l{ font-size:11.5px; color:var(--ink-500); margin-bottom:5px; }
+  .stat-box .v{ font-size:16px; font-weight:700; }
+  .stat-box.highlight .v{ color:var(--red-600); }
+  .stat-box .d{ font-size:10.5px; color:var(--ink-400); margin-top:2px; }
+
+  /* ---- Reports ---- */
+  .reports-layout{ display:grid; grid-template-columns: 1fr 300px; gap:16px; align-items:start; }
+  .report-item{ display:flex; align-items:center; gap:14px; padding:16px 18px; border-bottom:1px solid var(--ink-100); }
+  .report-item:last-child{ border-bottom:none; }
+  .report-icon{ width:38px; height:38px; border-radius:9px; background:var(--red-100); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .report-icon svg{ width:18px; height:18px; color:var(--red-600); }
+  .report-icon.csv{ background:var(--green-100); }
+  .report-icon.csv svg{ color:var(--green-600); }
+  .report-name{ font-size:14px; font-weight:600; margin:0 0 3px 0; }
+  .report-meta{ font-size:12px; color:var(--ink-500); }
+  .report-tag{ display:inline-block; font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:5px; background:var(--ink-100); color:var(--ink-500); margin-top:5px; }
+  .report-actions{ margin-left:auto; display:flex; gap:8px; }
+  .load-more{ text-align:center; padding-top:16px; }
+  .load-more a{ font-size:13px; font-weight:600; color:var(--teal-600); }
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:12.5px; font-weight:600; color:var(--ink-700); margin-bottom:6px; }
+  .field select, .field input{ width:100%; border:1px solid var(--ink-200); border-radius:9px; padding:9px 11px; font-size:13.5px; font-family:inherit; color:var(--ink-900); }
+  .storage-card{ padding:18px 20px; background:linear-gradient(135deg,var(--teal-700),var(--teal-500)); color:#fff; }
+  .storage-card .l{ font-size:12.5px; opacity:.85; margin-bottom:6px; }
+  .storage-card .v{ font-size:26px; font-weight:700; }
+  .storage-bar{ height:6px; border-radius:999px; background:rgba(255,255,255,.25); margin-top:12px; overflow:hidden; }
+  .storage-bar-fill{ height:100%; background:#fff; width:24%; }
+  .storage-card .foot{ font-size:11.5px; opacity:.8; margin-top:8px; }
+
+  /* ---- Settings ---- */
+  .settings-list{ max-width:640px; }
+  .settings-item{ display:flex; align-items:center; gap:15px; padding:17px 18px; border-bottom:1px solid var(--ink-100); }
+  .settings-item:last-child{ border-bottom:none; }
+  .settings-icon{ width:38px; height:38px; border-radius:999px; background:var(--ink-100); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .settings-icon svg{ width:17px; height:17px; color:var(--ink-700); }
+  .settings-title{ font-size:14.5px; font-weight:600; margin:0 0 2px 0; }
+  .settings-sub{ font-size:12.5px; color:var(--ink-500); margin:0; }
+  .settings-right{ margin-left:auto; display:flex; align-items:center; gap:8px; color:var(--ink-400); font-size:13px; }
+  .settings-item{ cursor:pointer; }
+  .settings-item:hover{ background:var(--ink-50); }
+
+  @media (max-width: 980px){
+    .params-grid{ grid-template-columns: repeat(2,1fr); }
+    .bottom-grid{ grid-template-columns: 1fr; }
+    .grid-2{ grid-template-columns: 1fr; }
+    .status-grid{ grid-template-columns: 1fr; }
+    .tanks-grid{ grid-template-columns: 1fr; }
+    .hist-layout{ grid-template-columns: 1fr; }
+    .reports-layout{ grid-template-columns: 1fr; }
+    .device-info-grid{ grid-template-columns: 120px 1fr; }
+    .sidebar{ display:none; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c3 4 6 7.5 6 11.5A6 6 0 0 1 6 13.5C6 9.5 9 6 12 2z"/></svg>
+      </div>
+      <span class="brand-name">AquaYield</span>
+    </div>
+
+    <nav class="nav" id="navList">
+      <button class="nav-item active" data-page="dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>
+        Dashboard
+      </button>
+      <button class="nav-item" data-page="ai">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.5.4.6 1 .6 1.6V16h6v-.6c0-.6.1-1.2.6-1.6A6 6 0 0 0 12 3Z"/></svg>
+        AI Suggestions
+      </button>
+      <button class="nav-item" data-page="alerts">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 4.5 1.5 6 1.5 6h-15S6 12.5 6 8Z"/><path d="M10.5 20a1.7 1.7 0 0 0 3 0"/></svg>
+        Alerts
+        <span class="nav-badge">3</span>
+      </button>
+      <button class="nav-item" data-page="history">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M7 15l4-5 3 3 6-7"/></svg>
+        History &amp; Trends
+      </button>
+      <button class="nav-item" data-page="device">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/><path d="M9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/></svg>
+        Device Status
+      </button>
+      <button class="nav-item" data-page="tanks">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg>
+        Tanks
+      </button>
+      <button class="nav-item" data-page="reports">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6M9 9h1"/></svg>
+        Reports
+      </button>
+      <div class="nav-divider"></div>
+      <button class="nav-item" data-page="settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 1 1-4 0v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3a2 2 0 1 1 0-4h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.6V3a2 2 0 1 1 4 0v.2a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.6 1H21a2 2 0 1 1 0 4h-.2a1.7 1.7 0 0 0-1.5 1z"/></svg>
+        Settings
+      </button>
+      <button class="nav-item" data-page="help">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2-3 4"/><path d="M12 17h.01"/></svg>
+        Help &amp; Support
+      </button>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="help-card">
+        <div class="icon-circle">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0f9aa4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a4 4 0 0 0 4-4V7a4 4 0 0 0-8 0v4a4 4 0 0 0 4 4Z"/><path d="M19 11a7 7 0 0 1-14 0M12 19v3"/></svg>
+        </div>
+        <p>Need help? We're here for you.</p>
+        <button class="btn-outline-sm">Contact Support</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <div class="main">
+    <header class="topbar">
+      <div class="tank-select">
+        <select class="tank-dropdown" id="tankPicker">
+          <option>Tank 1 - RAS System</option>
+          <option>Tank 2 - Grow-out Tank</option>
+          <option>Tank 3 - Nursery Tank</option>
+          <option>Tank 4 - Backup Tank</option>
+        </select>
+        <span class="status-pill"><span class="dot"></span> Online</span>
+      </div>
+      <div class="topbar-right">
+        <button class="icon-btn" aria-label="Notifications">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 4.5 1.5 6 1.5 6h-15S6 12.5 6 8Z"/><path d="M10.5 20a1.7 1.7 0 0 0 3 0"/></svg>
+          <span class="ping"></span>
+        </button>
+        <div class="user-chip">
+          <div class="avatar">AF</div>
+          <span class="name">Aqua Farmer</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#98a2b3" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+      </div>
+    </header>
+
+    <main class="content">
+
+      <!-- ============ DASHBOARD ============ -->
+      <section class="page active" id="page-dashboard">
+        <div class="page-head"><h1>Dashboard</h1><p>Live overview of Tank 1 — RAS System.</p></div>
+
+        <div class="grid-2">
+          <div class="card health-card">
+            <div class="health-left">
+              <div class="health-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12c-2 3-6 5-9 5-4 0-7-2-9-5 2-3 5-5 9-5 3 0 7 2 9 5Z"/><circle cx="15" cy="12" r="1"/><path d="M4 9c1 1 1 1 1 3s0 2-1 3"/></svg>
+              </div>
+              <div>
+                <div class="health-label">Overall Tank Health</div>
+                <div class="health-value">Good</div>
+                <div class="health-sub">All parameters are in safe range.</div>
+              </div>
+            </div>
+            <div class="fish-emoji">🐟</div>
+          </div>
+          <div class="card meta-card">
+            <div class="meta-row">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+              <div><div class="meta-label">Last Updated</div><div class="meta-value">Today, 10:30 AM</div></div>
+            </div>
+            <div class="meta-row">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.6a9 9 0 0 1 14 0M8.5 16a4.5 4.5 0 0 1 7 0M12 20h.01"/></svg>
+              <div><div class="meta-label">Device Status</div><div class="meta-value online">Online</div></div>
+            </div>
+          </div>
+        </div>
+
+        <h2 class="section-title">Live Water Parameters</h2>
+        <div class="params-grid" id="paramsGrid"></div>
+
+        <div class="bottom-grid">
+          <div class="card panel">
+            <div class="panel-head"><h3>Recent Alerts</h3><a href="#" data-page-link="alerts">View All</a></div>
+            <div id="dashAlerts"></div>
+          </div>
+          <div class="card panel">
+            <div class="panel-head"><h3>AI Suggestions</h3><a href="#" data-page-link="ai">View All</a></div>
+            <div id="dashSugg"></div>
+          </div>
+          <div class="card panel">
+            <div class="panel-head"><h3>Quick Overview</h3></div>
+            <div class="overview-stat"><span class="l">Average DO (Today)</span><span class="v">6.2 mg/L</span></div>
+            <svg class="mini-spark" viewBox="0 0 200 46" preserveAspectRatio="none"><polyline points="0,30 30,22 60,26 90,14 120,18 150,10 180,15 200,8" fill="none" stroke="#3b7dd8" stroke-width="2.5"/></svg>
+            <div class="overview-stat" style="margin-top:6px;"><span class="l">Average pH (Today)</span><span class="v">7.1</span></div>
+            <svg class="mini-spark" viewBox="0 0 200 46" preserveAspectRatio="none"><polyline points="0,20 30,25 60,18 90,22 120,16 150,20 180,12 200,17" fill="none" stroke="#1a9c72" stroke-width="2.5"/></svg>
+            <div class="overview-stat" style="margin-top:6px;"><span class="l">Water Temp (Avg)</span><span class="v">28.3 °C</span></div>
+            <svg class="mini-spark" viewBox="0 0 200 46" preserveAspectRatio="none"><polyline points="0,35 30,30 60,32 90,20 120,24 150,15 180,18 200,10" fill="none" stroke="#e04338" stroke-width="2.5"/></svg>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ AI SUGGESTIONS ============ -->
+      <section class="page" id="page-ai">
+        <div class="page-head"><h1>AI Suggestions</h1><p>Actionable intelligence for Tank 1.</p></div>
+        <div class="tabs">
+          <button class="active" data-tab="all">All Suggestions</button>
+          <button data-tab="feeding">Feeding</button>
+          <button data-tab="warnings">Early Warnings</button>
+        </div>
+
+        <div class="card sugg-card" data-cat="feeding">
+          <div class="sugg-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l16 8-16 8V4Z"/></svg></div>
+          <div class="sugg-body">
+            <div class="sugg-title-row"><h4>Feeding Suggestion</h4><span class="chip">Optimization</span><span class="sugg-time">Today, 10:30 AM</span></div>
+            <p class="sugg-text">Feed 1.2 kg of feed at 11:00 AM today.</p>
+            <div class="sugg-actions"><button class="btn-primary">Apply Schedule</button><button class="btn-secondary">Why this amount?</button></div>
+          </div>
+        </div>
+
+        <div class="card sugg-card alert-tone" data-cat="warnings">
+          <div class="sugg-icon warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg></div>
+          <div class="sugg-body">
+            <div class="sugg-title-row"><h4>Early-Warning Suggestion</h4><span class="chip">Alert</span><span class="sugg-time">Today, 09:15 AM</span></div>
+            <p class="sugg-text" style="color:#8a4a05;">Ammonia is rising (+0.2 ppm). Check your filtration system and reduce feeding slightly.</p>
+            <div class="sugg-actions"><button class="btn-secondary" style="background:#fff;">View Details</button></div>
+          </div>
+        </div>
+
+        <div class="card sugg-card" data-cat="forecast">
+          <div class="sugg-icon forecast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+          <div class="sugg-body">
+            <div class="sugg-title-row"><h4>Harvest-Timing Forecast</h4><span class="chip">Forecast</span><span class="sugg-time">Yesterday, 06:00 PM</span></div>
+            <p class="sugg-text" style="margin-bottom:4px;">Best time to harvest:</p>
+            <div class="harvest-window">May 25 – May 31, 2025</div>
+            <p class="sugg-text" style="margin-bottom:12px;">(High growth &amp; good market price)</p>
+            <div class="sugg-actions"><button class="btn-secondary">View Forecast</button></div>
+          </div>
+        </div>
+
+        <div class="card sugg-card" data-cat="general">
+          <div class="sugg-icon ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+          <div class="sugg-body">
+            <div class="sugg-title-row"><h4 style="color:#12805c;">General Recommendation</h4><span class="sugg-time">May 16, 02:30 PM</span></div>
+            <p class="sugg-text" style="margin:0;">Water quality is stable. Keep up the good work!</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ ALERTS ============ -->
+      <section class="page" id="page-alerts">
+        <div class="page-head"><h1>Alerts</h1><p>Manage notifications and system anomalies.</p></div>
+        <div class="filter-bar">
+          <div class="seg" id="alertSeg">
+            <button class="active" data-filter="all">All Alerts <span class="count">3</span></button>
+            <button data-filter="active">Active <span class="count">2</span></button>
+            <button data-filter="resolved">Resolved</button>
+          </div>
+          <button class="btn-secondary">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:5px;"><path d="M22 3H2l8 9.5V19l4 2v-8.5L22 3Z"/></svg>
+            Filter
+          </button>
+        </div>
+
+        <div class="card" id="alertsList"></div>
+
+        <div class="pagination">
+          <button aria-label="prev">‹</button>
+          <button class="active">1</button>
+          <button>2</button>
+          <button>3</button>
+          <span style="color:var(--ink-400);padding:0 2px;">…</span>
+          <button aria-label="next">›</button>
+        </div>
+      </section>
+
+      <!-- ============ HISTORY & TRENDS ============ -->
+      <section class="page" id="page-history">
+        <div class="page-head page-head-row">
+          <div><h1>History &amp; Trends</h1><p>Analyze water quality parameters over time.</p></div>
+          <div style="display:flex; gap:10px;">
+            <select class="tank-dropdown"><option>Last 30 Days</option><option>Last 7 Days</option><option>Last 90 Days</option></select>
+            <button class="btn-primary">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 19h16"/></svg>
+              Export Data
+            </button>
+          </div>
+        </div>
+
+        <div class="hist-layout">
+          <div>
+            <div class="card hist-side" style="margin-bottom:16px;">
+              <h4>Parameters</h4>
+              <label class="param-check"><input type="checkbox" checked> Ammonia (NH₃) <span class="dot-sw" style="background:#e04338;"></span></label>
+              <label class="param-check"><input type="checkbox"> Dissolved Oxygen <span class="dot-sw" style="background:#3b7dd8;"></span></label>
+              <label class="param-check"><input type="checkbox"> Temperature <span class="dot-sw" style="background:#d68910;"></span></label>
+              <label class="param-check"><input type="checkbox"> pH Level <span class="dot-sw" style="background:#1a9c72;"></span></label>
+            </div>
+            <div class="card hist-side">
+              <h4>Chart Type</h4>
+              <div class="seg" style="width:100%;">
+                <button class="active" style="flex:1;">Line</button>
+                <button style="flex:1;">Bar</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card chart-card">
+            <div class="chart-head">
+              <div><h3>Ammonia (NH₃) Trends</h3><div class="sub">Optimal range: 0 – 0.5 mg/L</div></div>
+              <div class="range-seg">
+                <button>1D</button><button>7D</button><button class="active">30D</button><button>90D</button>
+              </div>
+            </div>
+            <svg viewBox="0 0 720 230" style="width:100%; height:230px;">
+              <defs>
+                <linearGradient id="fillGood" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#1a9c72" stop-opacity="0.14"/>
+                  <stop offset="100%" stop-color="#1a9c72" stop-opacity="0"/>
+                </linearGradient>
+                <linearGradient id="fillBad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#e04338" stop-opacity="0.16"/>
+                  <stop offset="100%" stop-color="#e04338" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <line x1="0" y1="70" x2="720" y2="70" stroke="#f4a5a0" stroke-dasharray="4 4"/>
+              <text x="700" y="64" font-size="10" fill="#e04338" text-anchor="end">Critical Limit</text>
+              <rect x="0" y="70" width="720" height="130" fill="#1a9c72" opacity="0.05"/>
+              <polygon points="0,190 0,182 60,168 120,158 180,140 240,120 300,108 360,98 420,92 480,80 540,66 600,58 660,54 720,56 720,200 0,200"
+                fill="url(#fillBad)"/>
+              <polyline points="0,182 60,168 120,158 180,140 240,120 300,108 360,98 420,92 480,80 540,66 600,58 660,54 720,56"
+                fill="none" stroke="#e04338" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="660" cy="54" r="4" fill="#e04338"/>
+              <text x="20" y="14" font-size="10" fill="#98a2b3">1.0</text>
+              <text x="20" y="74" font-size="10" fill="#98a2b3">0.5</text>
+              <text x="20" y="146" font-size="10" fill="#98a2b3">0.25</text>
+              <text x="20" y="198" font-size="10" fill="#98a2b3">0.0</text>
+              <text x="0" y="222" font-size="10.5" fill="#98a2b3">May 1</text>
+              <text x="170" y="222" font-size="10.5" fill="#98a2b3">May 8</text>
+              <text x="330" y="222" font-size="10.5" fill="#98a2b3">May 15</text>
+              <text x="490" y="222" font-size="10.5" fill="#98a2b3">May 22</text>
+              <text x="670" y="222" font-size="10.5" fill="#98a2b3">May 29</text>
+            </svg>
+
+            <div class="stat-row">
+              <div class="stat-box"><div class="l">Average</div><div class="v">0.42 mg/L</div></div>
+              <div class="stat-box"><div class="l">Minimum</div><div class="v">0.12 mg/L</div><div class="d">May 4</div></div>
+              <div class="stat-box highlight"><div class="l">Maximum</div><div class="v">0.85 mg/L</div><div class="d">May 28</div></div>
+              <div class="stat-box"><div class="l">Std. Dev</div><div class="v">0.18 mg/L</div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ DEVICE STATUS ============ -->
+      <section class="page" id="page-device">
+        <div class="page-head"><h1>Device Status</h1><p>Power, connectivity, and hardware info for Tank 1's sensor box.</p></div>
+
+        <div class="status-grid">
+          <div class="card status-card">
+            <div class="status-eyebrow">Power Status</div>
+            <div class="status-main" style="color:var(--green-600);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z"/></svg>
+              Battery 82%
+            </div>
+            <div class="status-foot"><span>☀️ Solar Charging</span><span style="color:var(--green-600); font-weight:600;">Good</span></div>
+          </div>
+          <div class="card status-card">
+            <div class="status-eyebrow">Connectivity Status</div>
+            <div class="status-main" style="color:var(--blue-500);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.6a9 9 0 0 1 14 0M8.5 16a4.5 4.5 0 0 1 7 0M12 20h.01"/></svg>
+              WiFi Connected
+            </div>
+            <div class="status-foot"><span>Signal Strength: <b>Strong</b></span></div>
+            <div class="status-foot" style="margin-top:4px;"><span style="color:var(--green-600); font-weight:600;">Data is current</span></div>
+          </div>
+          <div class="card status-card">
+            <div class="status-eyebrow">Last Reboot</div>
+            <div class="status-main" style="color:var(--ink-900);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+              May 10, 2025
+            </div>
+            <div class="status-foot"><span>08:15 AM</span></div>
+          </div>
+        </div>
+
+        <div class="card device-info-card">
+          <div class="status-eyebrow" style="margin-bottom:0;">Device Information</div>
+          <div style="display:flex; gap:26px; margin-top:14px; flex-wrap:wrap;">
+            <div class="device-visual">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 2 19h20L12 3Z"/></svg>
+              <span>AQUAYIELD</span>
+            </div>
+            <div class="device-info-grid" style="flex:1; min-width:280px;">
+              <div class="dinfo-label">Device ID</div><div class="dinfo-value">AY-BOX-01</div>
+              <div class="dinfo-label">Firmware Version</div><div class="dinfo-value">v1.2.3</div>
+              <div class="dinfo-label">Device Model</div><div class="dinfo-value">AquaYield Box Pro</div>
+              <div class="dinfo-label">Installed On</div><div class="dinfo-value">Apr 12, 2025</div>
+              <div class="dinfo-label">Location</div><div class="dinfo-value">Farm – North Pond</div>
+              <div></div><div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ TANKS ============ -->
+      <section class="page" id="page-tanks">
+        <div class="page-head page-head-row">
+          <div><h1>Tanks</h1><p>Manage and monitor all active aquaculture systems.</p></div>
+          <button class="btn-primary">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            Add Tank
+          </button>
+        </div>
+        <div class="tanks-grid" id="tanksGrid"></div>
+      </section>
+
+      <!-- ============ REPORTS ============ -->
+      <section class="page" id="page-reports">
+        <div class="page-head page-head-row">
+          <div><h1>Reports</h1><p>Generate and view automated water quality reports.</p></div>
+          <button class="btn-primary">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            New Report
+          </button>
+        </div>
+
+        <div class="reports-layout">
+          <div>
+            <div class="tabs">
+              <button class="active" data-rtab="recent">Recent Reports</button>
+              <button data-rtab="scheduled">Scheduled</button>
+              <button data-rtab="archived">Archived</button>
+            </div>
+            <div class="card" id="reportsList"></div>
+            <div class="load-more"><a href="#">Load More Reports</a></div>
+          </div>
+
+          <div>
+            <div class="card" style="padding:20px; margin-bottom:16px;">
+              <div style="display:flex; align-items:center; gap:9px; margin-bottom:16px;">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#0f9aa4" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+                <h3 style="font-size:15px; margin:0;">Schedule Report</h3>
+              </div>
+              <div class="field">
+                <label>Report Type</label>
+                <select><option>Comprehensive Water Quality</option><option>Feeding Summary</option><option>Alerts Summary</option></select>
+              </div>
+              <div class="field">
+                <label>Frequency</label>
+                <select><option>Weekly</option><option>Daily</option><option>Monthly</option></select>
+              </div>
+              <div class="field">
+                <label>Recipients (Emails)</label>
+                <input type="email" placeholder="manager@aquayield.com">
+              </div>
+              <button class="btn-secondary" style="width:100%;">Save Setup</button>
+            </div>
+
+            <div class="card storage-card">
+              <div class="l">Storage Used</div>
+              <div class="v">1.2 GB</div>
+              <div class="storage-bar"><div class="storage-bar-fill"></div></div>
+              <div class="foot">24% of 5GB Quota</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ SETTINGS ============ -->
+      <section class="page" id="page-settings">
+        <div class="page-head"><h1>Settings</h1><p>Manage your account, alerts, and app preferences.</p></div>
+        <div class="card settings-list" id="settingsList"></div>
+      </section>
+
+      <!-- ============ HELP ============ -->
+      <section class="page" id="page-help">
+        <div class="page-head"><h1>Help &amp; Support</h1><p>Reach the AquaYield team or browse quick answers.</p></div>
+        <div class="card" style="padding:26px; max-width:640px;">
+          <p style="margin:0 0 16px 0; font-size:14px; color:var(--ink-700); line-height:1.6;">Have a question about your readings, an alert, or your device? Our support team typically replies within a few hours.</p>
+          <div style="display:flex; gap:10px;">
+            <button class="btn-primary">Contact Support</button>
+            <button class="btn-secondary">Browse FAQ</button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<script>
+/* ---------------- icon helpers ---------------- */
+const ICONS = {
+  drop: '<path d="M12 2c3 4 6 7.5 6 11.5A6 6 0 0 1 6 13.5C6 9.5 9 6 12 2z"/>',
+  flask: '<path d="M9 2v6L4 19a2 2 0 0 0 1.8 3h12.4A2 2 0 0 0 20 19L15 8V2"/><path d="M9 2h6"/>',
+  therm: '<path d="M14 14.76V4a2 2 0 0 0-4 0v10.76a4 4 0 1 0 4 0Z"/>',
+  vial: '<path d="M9 2h6M12 2v6M8 8h8l3 11a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3L8 8Z"/>',
+  waves: '<path d="M2 8c1.5 1.5 3 1.5 4.5 0S9 6.5 10.5 8 13.5 9.5 15 8s3-1.5 4.5 0M2 14c1.5 1.5 3 1.5 4.5 0S9 12.5 10.5 14s3 1.5 4.5 0 3-1.5 4.5 0M2 20c1.5 1.5 3 1.5 4.5 0S9 18.5 10.5 20s3 1.5 4.5 0 3-1.5 4.5 0"/>',
+  salinity: '<path d="M6 3c0 4-4 5-4 9a4 4 0 0 0 8 0c0-4-4-5-4-9Z"/><path d="M16 9c0 4-4 5-4 9a4 4 0 0 0 8 0c0-4-4-5-4-9Z"/>',
+  waterlevel: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 13h16"/>',
+};
+function icon(name, extra=''){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ${extra}>${ICONS[name]}</svg>`; }
+
+/* ---------------- data ---------------- */
+const params = [
+  {name:'Dissolved Oxygen (DO)', value:'6.5', unit:'mg/L', min:0, max:10, safeMin:5, safeMax:8, pos:65, icon:'drop', color:'#3b7dd8', range:'5 - 8 mg/L'},
+  {name:'pH', value:'7.2', unit:'', min:0, max:14, safeMin:6.5, safeMax:8.5, pos:51, icon:'flask', color:'#7a5cff', range:'6.5 - 8.5'},
+  {name:'Temperature', value:'28.4', unit:'°C', min:15, max:40, safeMin:24, safeMax:30, pos:53, icon:'therm', color:'#e04338', range:'24 - 30 °C'},
+  {name:'Ammonia (NH₃)', value:'0.15', unit:'mg/L', min:0, max:1, safeMin:0, safeMax:0.5, pos:30, icon:'vial', color:'#a05cff', range:'0 - 0.5 mg/L'},
+  {name:'Turbidity (Cloudiness)', value:'12', unit:'NTU', min:0, max:25, safeMin:0, safeMax:15, pos:48, icon:'waves', color:'#12b3c9', range:'0 - 25 NTU'},
+  {name:'Salinity / Conductivity', value:'1.2', unit:'mS/cm', min:0, max:2, safeMin:0.5, safeMax:2, pos:60, icon:'salinity', color:'#d68910', range:'0.5 - 2.0 mS/cm'},
+  {name:'Water Level', value:'85', unit:'%', min:20, max:100, safeMin:20, safeMax:100, pos:82, icon:'waterlevel', color:'#1a9c72', range:'20 - 100 %'},
+];
+
+const alerts = [
+  {sev:'critical', title:'High Ammonia', sub:'Ammonia level is 0.75 mg/L', time:'Today, 10:25 AM', active:true},
+  {sev:'warning', title:'Low Dissolved Oxygen', sub:'DO level is 3.8 mg/L', time:'Today, 09:15 AM', active:true},
+  {sev:'warning', title:'High Temperature', sub:'Temperature is 31.2 °C', time:'Yesterday, 06:40 PM', active:false},
+  {sev:'info', title:'Device Reconnected', sub:'Your device is back online', time:'Yesterday, 05:20 PM', active:false},
+];
+
+const tanks = [
+  {name:'Tank 1 - RAS System', updated:'Today, 10:30 AM', online:true, health:'Good', temp:'28.4 °C', do:'6.5 mg/L', warn:false},
+  {name:'Tank 2 - Grow-out Tank', updated:'Today, 10:28 AM', online:true, health:'Warning', temp:'31.2 °C', do:'5.8 mg/L', warn:true},
+  {name:'Tank 3 - Nursery Tank', updated:'Yesterday, 05:50 PM', online:false, health:'--', temp:'--', do:'--', warn:false, offline:true},
+  {name:'Tank 4 - Backup Tank', updated:'Today, 09:40 AM', online:true, health:'Good', temp:'24.1 °C', do:'7.2 mg/L', warn:false},
+];
+
+const reports = [
+  {type:'pdf', name:'Weekly Water Quality Summary', meta:'Oct 15 – Oct 21, 2023 · 2.4 MB', tag:'System Generated', action:'PDF'},
+  {type:'csv', name:'Sensor Data Export – Tank 1', meta:'Oct 01 – Oct 15, 2023 · 156 KB', tag:'Manual Export', action:'CSV'},
+  {type:'pdf', name:'Monthly Health Assessment', meta:'September 2023 · 4.1 MB', tag:'System Generated', action:'PDF'},
+];
+
+const settings = [
+  {icon:'<circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/>', title:'Profile Settings', sub:'Manage your profile information'},
+  {icon:'<path d="M6 8a6 6 0 0 1 12 0c0 4.5 1.5 6 1.5 6h-15S6 12.5 6 8Z"/><path d="M10.5 20a1.7 1.7 0 0 0 3 0"/>', title:'Notification Settings', sub:'Manage push & SMS preferences'},
+  {icon:'<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/>', title:'Alert Preferences', sub:'Set alert thresholds & rules'},
+  {icon:'<path d="M3 6h18M3 12h18M3 18h12"/>', title:'Units', sub:'Choose measurement units'},
+  {icon:'<rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>', title:'Account & Security', sub:'Manage password and security'},
+  {icon:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 3.5 5.5 3.5 9s-1 6.5-3.5 9c-2.5-2.5-3.5-5.5-3.5-9s1-6.5 3.5-9Z"/>', title:'Language', sub:'English'},
+  {icon:'<circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/>', title:'About AquaYield', sub:'Version 1.2.3'},
+];
+
+/* ---------------- render helpers ---------------- */
+function severityColors(sev){
+  return sev === 'critical' ? {bg:'var(--red-100)', fg:'var(--red-600)'} :
+         sev === 'warning' ? {bg:'var(--amber-100)', fg:'var(--amber-600)'} :
+         {bg:'#e6efff', fg:'var(--blue-500)'};
+}
+function alertIconSvg(sev){
+  if(sev==='critical') return '<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/>';
+  if(sev==='warning') return '<path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/>';
+  return '<circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/>';
+}
+
+function renderParams(){
+  const grid = document.getElementById('paramsGrid');
+  grid.innerHTML = params.map(p => {
+    const c = severityColors(p.pos > 85 || p.pos < 15 ? 'warning' : 'ok');
+    return `
+    <div class="card param-card">
+      <div class="param-top">
+        <div class="param-icon" style="background:${p.color}22; color:${p.color};">${icon(p.icon)}</div>
+        <div class="param-name">${p.name}</div>
+      </div>
+      <div class="param-value">${p.value}<span class="unit">${p.unit}</span></div>
+      <div class="gauge-track" style="background:linear-gradient(90deg, var(--green-500) 0 60%, var(--amber-500) 60% 82%, var(--red-500) 82% 100%);">
+        <div class="gauge-marker" style="left:${p.pos}%;"></div>
+      </div>
+      <div class="gauge-range"><span>${p.range.split(' - ')[0] || p.range}</span><span>${p.range}</span></div>
+    </div>`;
+  }).join('');
+}
+
+function renderDashboardPanels(){
+  document.getElementById('dashAlerts').innerHTML = alerts.slice(0,2).map(a=>{
+    const c = severityColors(a.sev);
+    return `<div class="alert-row">
+      <div class="row-icon" style="background:${c.bg}; color:${c.fg};">${icon('vial').replace('vial','')}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${alertIconSvg(a.sev)}</svg></div>
+      <div style="flex:1;">
+        <p class="row-title">${a.title}</p>
+        <p class="row-sub">${a.sub}</p>
+        <span class="tag ${a.sev}">${a.sev==='critical'?'Critical':'Warning'}</span>
+      </div>
+      <span class="row-time">${a.time}</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('dashSugg').innerHTML = `
+    <div class="sugg-row">
+      <div class="row-icon" style="background:var(--teal-50); color:var(--teal-600);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4l16 8-16 8V4Z"/></svg></div>
+      <div><p class="row-title">Feeding Suggestion</p><p class="row-sub">Feed 1.2 kg of feed at 11:00 AM today.</p></div>
+    </div>
+    <div class="sugg-row">
+      <div class="row-icon" style="background:var(--amber-100); color:var(--amber-600);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg></div>
+      <div><p class="row-title">Early-Warning Suggestion</p><p class="row-sub">Ammonia is rising. Check your filtration system.</p></div>
+    </div>`;
+}
+
+function renderAlertsPage(filter='all'){
+  let list = alerts;
+  if(filter === 'active') list = alerts.filter(a=>a.active);
+  if(filter === 'resolved') list = alerts.filter(a=>!a.active);
+  document.getElementById('alertsList').innerHTML = list.map(a=>{
+    const label = a.sev==='critical'?'Critical':a.sev==='warning'?'Warning':'Info';
+    return `<div class="alert-item ${a.sev}">
+      <div class="row-icon" style="background:${severityColors(a.sev).bg}; color:${severityColors(a.sev).fg}; width:34px;height:34px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${alertIconSvg(a.sev)}</svg>
+      </div>
+      <div class="body">
+        <p class="row-title">${a.title}</p>
+        <p class="row-sub">${a.sub}</p>
+      </div>
+      <div class="alert-meta">
+        <span class="badge ${a.sev}">${label}</span>
+        <span class="row-time">${a.time}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderTanks(){
+  document.getElementById('tanksGrid').innerHTML = tanks.map(t=>`
+    <div class="card tank-card ${t.offline?'offline':''}">
+      <div class="tank-card-top">
+        <div class="tank-card-id">
+          <div class="tank-avatar ${t.offline?'off':''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg></div>
+          <div>
+            <div class="tank-name">${t.name}</div>
+            <div class="tank-updated">Last updated: ${t.updated}</div>
+          </div>
+        </div>
+        <span class="status-pill" style="${t.online? '' : 'background:var(--ink-100); color:var(--ink-500);'}">
+          <span class="dot" style="${t.online? '' : 'background:var(--ink-400);'}"></span> ${t.online?'Online':'Offline'}
+        </span>
+      </div>
+      <div class="tank-stats">
+        <div class="tank-stat"><div class="l">Health</div><div class="v ${t.warn?'warn':(t.offline?'':'good')}">${t.health}</div></div>
+        <div class="tank-stat"><div class="l">Temp</div><div class="v ${t.warn?'warn':''}">${t.temp}</div></div>
+        <div class="tank-stat"><div class="l">DO</div><div class="v">${t.do}</div></div>
+      </div>
+      <div class="tank-card-foot"><a href="#">View Details ›</a></div>
+    </div>
+  `).join('');
+}
+
+function renderReports(){
+  document.getElementById('reportsList').innerHTML = reports.map(r=>`
+    <div class="report-item">
+      <div class="report-icon ${r.type==='csv'?'csv':''}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+      </div>
+      <div>
+        <p class="report-name">${r.name}</p>
+        <p class="report-meta">${r.meta}</p>
+        <span class="report-tag">${r.tag}</span>
+      </div>
+      <div class="report-actions">
+        ${r.action==='PDF' ? '<button class="btn-secondary">View</button><button class="btn-secondary">↓ PDF</button>' : '<button class="btn-secondary">↓ CSV</button>'}
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderSettings(){
+  document.getElementById('settingsList').innerHTML = settings.map(s=>`
+    <div class="settings-item">
+      <div class="settings-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${s.icon}</svg></div>
+      <div><p class="settings-title">${s.title}</p><p class="settings-sub">${s.sub}</p></div>
+      <div class="settings-right">›</div>
+    </div>
+  `).join('');
+}
+
+/* ---------------- nav / interactivity ---------------- */
+function goTo(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+page)?.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.page===page));
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+document.querySelectorAll('.nav-item').forEach(n=>n.addEventListener('click', ()=>goTo(n.dataset.page)));
+document.querySelectorAll('[data-page-link]').forEach(n=>n.addEventListener('click', e=>{e.preventDefault(); goTo(n.dataset.pageLink);}));
+
+document.getElementById('alertSeg').addEventListener('click', e=>{
+  const btn = e.target.closest('button'); if(!btn) return;
+  document.querySelectorAll('#alertSeg button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAlertsPage(btn.dataset.filter);
+});
+
+document.querySelectorAll('.tabs').forEach(tabgroup=>{
+  tabgroup.addEventListener('click', e=>{
+    const btn = e.target.closest('button'); if(!btn) return;
+    tabgroup.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    if(btn.dataset.tab){
+      const cat = btn.dataset.tab;
+      document.querySelectorAll('#page-ai .sugg-card').forEach(c=>{
+        c.style.display = (cat==='all' || c.dataset.cat===cat || (cat==='warnings' && c.dataset.cat==='warnings')) ? 'flex' : 'none';
+      });
+    }
+  });
+});
+
+/* init */
+renderParams();
+renderDashboardPanels();
+renderAlertsPage();
+renderTanks();
+renderReports();
+renderSettings();
+</script>
+</body>
+</html>
